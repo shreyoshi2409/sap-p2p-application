@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SAP P2P | Procure-to-Pay Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0e17;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: #1e2d45;
+      --accent: #0070f3;
+      --accent2: #00c2ff;
+      --gold: #f0a500;
+      --red: #ff4757;
+      --green: #00d68f;
+      --yellow: #ffd166;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --mono: "IBM Plex Mono", monospace;
+      --sans: "IBM Plex Sans", sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid overlay background ── */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,112,243,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,112,243,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10,14,23,0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      background: var(--accent);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 4px;
+    }
+
+    .logo-text {
+      font-family: var(--mono);
+      font-size: 14px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    .logo-text span { color: var(--text); }
+
+    .header-stats {
+      display: flex;
+      gap: 24px;
+    }
+
+    .stat-chip {
+      font-family: var(--mono);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .stat-chip .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+    }
+
+    /* ── LAYOUT ── */
+    .app {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 60px);
+    }
+
+    /* ── SIDEBAR ── */
+    nav {
+      border-right: 1px solid var(--border);
+      padding: 24px 0;
+      position: sticky;
+      top: 60px;
+      height: calc(100vh - 60px);
+      overflow-y: auto;
+    }
+
+    .nav-section-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 0 20px 8px;
+      margin-top: 16px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--muted);
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+
+    .nav-item.active {
+      color: var(--accent2);
+      border-left-color: var(--accent);
+      background: rgba(0,112,243,0.08);
+    }
+
+    .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    /* ── TABS (views) ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      margin-bottom: 28px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .page-title {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .page-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-family: var(--mono);
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.blue::before { background: var(--accent); }
+    .stat-card.red::before { background: var(--red); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.gold::before { background: var(--gold); }
+
+    .stat-label { font-size: 11px; color: var(--muted); font-family: var(--mono); letter-spacing: 0.06em; }
+    .stat-value { font-size: 32px; font-family: var(--mono); font-weight: 600; margin-top: 8px; line-height: 1; }
+    .stat-card.blue .stat-value { color: var(--accent2); }
+    .stat-card.red .stat-value { color: var(--red); }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.gold .stat-value { color: var(--gold); }
+
+    /* ── TABLES ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .table-title { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th {
+      background: rgba(255,255,255,0.02);
+      text-align: left;
+      padding: 10px 16px;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-family: var(--mono);
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .badge-low { background: rgba(255,71,87,0.15); color: var(--red); border: 1px solid rgba(255,71,87,0.3); }
+    .badge-ok { background: rgba(0,214,143,0.12); color: var(--green); border: 1px solid rgba(0,214,143,0.25); }
+    .badge-pending { background: rgba(240,165,0,0.12); color: var(--gold); border: 1px solid rgba(240,165,0,0.25); }
+    .badge-converted { background: rgba(0,194,255,0.12); color: var(--accent2); border: 1px solid rgba(0,194,255,0.25); }
+    .badge-ordered { background: rgba(0,112,243,0.15); color: #6db6ff; border: 1px solid rgba(0,112,243,0.3); }
+    .badge-received { background: rgba(0,214,143,0.12); color: var(--green); border: 1px solid rgba(0,214,143,0.25); }
+    .badge-cancelled { background: rgba(100,116,139,0.15); color: var(--muted); border: 1px solid rgba(100,116,139,0.3); }
+
+    /* ── STOCK BAR ── */
+    .stock-bar-wrap { width: 80px; }
+    .stock-bar-bg {
+      height: 4px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .stock-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s;
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: var(--mono);
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #0060d3; transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+
+    .btn-danger {
+      background: rgba(255,71,87,0.12);
+      color: var(--red);
+      border: 1px solid rgba(255,71,87,0.3);
+    }
+    .btn-danger:hover { background: rgba(255,71,87,0.2); }
+
+    .btn-success {
+      background: rgba(0,214,143,0.12);
+      color: var(--green);
+      border: 1px solid rgba(0,214,143,0.3);
+    }
+    .btn-success:hover { background: rgba(0,214,143,0.2); }
+
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      width: 100%;
+      max-width: 480px;
+      padding: 28px;
+      position: relative;
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .modal-title {
+      font-family: var(--mono);
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .modal-subtitle {
+      font-size: 12px;
+      color: var(--muted);
+      font-family: var(--mono);
+      margin-bottom: 24px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: var(--text); }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      transition: border-color 0.15s;
+    }
+
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(0,112,243,0.15);
+    }
+
+    .form-control option { background: var(--surface2); }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .form-footer {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ── TOAST ── */
+    .toast-container {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+      animation: toastIn 0.25s ease;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .toast.success { border-left: 3px solid var(--green); }
+    .toast.error { border-left: 3px solid var(--red); }
+    .toast.info { border-left: 3px solid var(--accent); }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--muted);
+    }
+
+    .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-text { font-family: var(--mono); font-size: 13px; }
+
+    /* ── FLOW DIAGRAM (dashboard) ── */
+    .flow-banner {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .flow-node {
+      background: rgba(0,112,243,0.1);
+      border: 1px solid rgba(0,112,243,0.3);
+      color: var(--accent2);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .flow-arrow { color: var(--muted); font-size: 16px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <span class="logo-badge">SAP BTP</span>
+    <span class="logo-text">/ <span>Procure-to-Pay Portal</span></span>
+  </div>
+  <div class="header-stats" id="headerStats">
+    <span class="stat-chip"><span class="dot" style="background:var(--green)"></span><span id="hMat">– Materials</span></span>
+    <span class="stat-chip"><span class="dot" style="background:var(--red)"></span><span id="hLow">– Low Stock</span></span>
+    <span class="stat-chip"><span class="dot" style="background:var(--gold)"></span><span id="hPR">– Pending PRs</span></span>
+    <span class="stat-chip"><span class="dot" style="background:var(--accent)"></span><span id="hPO">– Active POs</span></span>
+  </div>
+</header>
+
+<!-- APP LAYOUT -->
+<div class="app">
+
+  <!-- SIDEBAR NAV -->
+  <nav>
+    <div class="nav-section-label">Overview</div>
+    <div class="nav-item active" onclick="navigate('dashboard')">
+      <span class="nav-icon">⬛</span> Dashboard
+    </div>
+
+    <div class="nav-section-label">SAP MM</div>
+    <div class="nav-item" onclick="navigate('inventory')">
+      <span class="nav-icon">📦</span> Inventory
+    </div>
+
+    <div class="nav-section-label">Procurement</div>
+    <div class="nav-item" onclick="navigate('pr')">
+      <span class="nav-icon">📋</span> Purchase Requisitions
+    </div>
+    <div class="nav-item" onclick="navigate('po')">
+      <span class="nav-icon">🛒</span> Purchase Orders
+    </div>
+
+    <div class="nav-section-label" style="margin-top:auto">System</div>
+    <div class="nav-item" style="margin-top:12px" onclick="showModal('addMaterial')">
+      <span class="nav-icon">➕</span> Add Material
+    </div>
+    <div class="nav-item" onclick="showModal('createPR')">
+      <span class="nav-icon">📝</span> Create PR
+    </div>
+    <div class="nav-item" onclick="showModal('createPO')">
+      <span class="nav-icon">✅</span> Convert PR → PO
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main>
+
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <div>
+          <div class="page-title">P2P Dashboard</div>
+          <div class="page-subtitle">// Real-time procurement overview</div>
+        </div>
+        <button class="btn btn-ghost" onclick="refreshAll()">⟳ Refresh</button>
+      </div>
+
+      <div class="flow-banner">
+        <div class="flow-node">Material Master</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">Purchase Requisition</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">Purchase Order</div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node">Goods Receipt</div>
+      </div>
+
+      <div class="stat-grid" id="dashStatGrid">
+        <div class="stat-card blue"><div class="stat-label">TOTAL MATERIALS</div><div class="stat-value" id="dsMat">—</div></div>
+        <div class="stat-card red"><div class="stat-label">LOW STOCK ITEMS</div><div class="stat-value" id="dsLow">—</div></div>
+        <div class="stat-card gold"><div class="stat-label">PENDING PR</div><div class="stat-value" id="dsPR">—</div></div>
+        <div class="stat-card green"><div class="stat-label">ACTIVE PO</div><div class="stat-value" id="dsPO">—</div></div>
+      </div>
+
+      <!-- Recent low-stock table on dashboard -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">⚠ Low Stock Alerts</span>
+          <button class="btn btn-sm btn-primary" onclick="showModal('createPR')">+ Create PR</button>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Material ID</th><th>Name</th><th>Stock</th><th>Threshold</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="dashLowTable">
+            <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">All stock levels healthy</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── INVENTORY ── -->
+    <div class="view" id="view-inventory">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Material Master</div>
+          <div class="page-subtitle">// SAP MM · Inventory Overview</div>
+        </div>
+        <button class="btn btn-primary" onclick="showModal('addMaterial')">+ Add Material</button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">Material Records</span>
+          <span id="matCount" style="font-family:var(--mono);font-size:11px;color:var(--muted)">0 items</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Material ID</th><th>Name</th><th>Qty</th><th>Unit</th><th>Threshold</th><th>Stock Level</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="inventoryTable">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">No materials found</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PURCHASE REQUISITIONS ── -->
+    <div class="view" id="view-pr">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Purchase Requisitions</div>
+          <div class="page-subtitle">// SAP MM · PR Management</div>
+        </div>
+        <button class="btn btn-primary" onclick="showModal('createPR')">+ Create PR</button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">PR Records</span>
+          <span id="prCount" style="font-family:var(--mono);font-size:11px;color:var(--muted)">0 items</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>PR Number</th><th>Material</th><th>Quantity</th><th>Unit</th><th>Remarks</th><th>Status</th><th>Date</th><th>Action</th></tr>
+          </thead>
+          <tbody id="prTable">
+            <tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No requisitions yet</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PURCHASE ORDERS ── -->
+    <div class="view" id="view-po">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Purchase Orders</div>
+          <div class="page-subtitle">// SAP MM · PO Management</div>
+        </div>
+        <button class="btn btn-primary" onclick="showModal('createPO')">+ Convert PR → PO</button>
+      </div>
+
+      <div class="table-wrap">
+        <div class="table-header">
+          <span class="table-title">PO Records</span>
+          <span id="poCount" style="font-family:var(--mono);font-size:11px;color:var(--muted)">0 items</span>
+        </div>
+        <table>
+          <thead>
+            <tr><th>PO Number</th><th>PR Ref</th><th>Material</th><th>Qty</th><th>Supplier</th><th>Unit Price</th><th>Total</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="poTable">
+            <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">No purchase orders yet</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ══════════════ MODALS ══════════════ -->
+
+<!-- Add Material Modal -->
+<div class="modal-overlay" id="modal-addMaterial">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('addMaterial')">✕</button>
+    <div class="modal-title">Add Material</div>
+    <div class="modal-subtitle">// SAP MM · Material Master Record</div>
+
+    <div class="form-group">
+      <label class="form-label">Material Name</label>
+      <input class="form-control" type="text" id="mat-name" placeholder="e.g. Paracetamol 500mg" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <input class="form-control" type="number" id="mat-qty" placeholder="0" min="0" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Unit</label>
+        <select class="form-control" id="mat-unit">
+          <option>Strips</option><option>Capsules</option><option>Tablets</option>
+          <option>Bottles</option><option>Vials</option><option>Pairs</option>
+          <option>Boxes</option><option>Units</option><option>Kg</option><option>Litres</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Reorder Threshold</label>
+      <input class="form-control" type="number" id="mat-threshold" placeholder="Minimum stock level before alert" min="1" />
+    </div>
+
+    <div class="form-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addMaterial')">Cancel</button>
+      <button class="btn btn-primary" onclick="addMaterial()">Add to Master</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create PR Modal -->
+<div class="modal-overlay" id="modal-createPR">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('createPR')">✕</button>
+    <div class="modal-title">Create Purchase Requisition</div>
+    <div class="modal-subtitle">// SAP MM · PR Creation</div>
+
+    <div class="form-group">
+      <label class="form-label">Select Material</label>
+      <select class="form-control" id="pr-material"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantity Required</label>
+      <input class="form-control" type="number" id="pr-qty" placeholder="0" min="1" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Remarks (optional)</label>
+      <input class="form-control" type="text" id="pr-remarks" placeholder="e.g. Urgent restock required" />
+    </div>
+
+    <div class="form-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createPR')">Cancel</button>
+      <button class="btn btn-primary" onclick="createPR()">Submit PR</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create PO Modal -->
+<div class="modal-overlay" id="modal-createPO">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('createPO')">✕</button>
+    <div class="modal-title">Convert PR → Purchase Order</div>
+    <div class="modal-subtitle">// SAP MM · PO Creation</div>
+
+    <div class="form-group">
+      <label class="form-label">Select Pending PR</label>
+      <select class="form-control" id="po-pr" onchange="onPRSelect()"></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Supplier / Vendor Name</label>
+      <input class="form-control" type="text" id="po-supplier" placeholder="e.g. MedSupply Pvt Ltd" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Unit Price (₹)</label>
+        <input class="form-control" type="number" id="po-price" placeholder="0.00" min="0" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Expected Delivery</label>
+        <input class="form-control" type="date" id="po-delivery" />
+      </div>
+    </div>
+    <div id="po-preview" style="display:none;background:rgba(0,112,243,0.06);border:1px solid rgba(0,112,243,0.2);border-radius:6px;padding:12px;margin-top:4px;font-family:var(--mono);font-size:11px;color:var(--muted)"></div>
+
+    <div class="form-footer">
+      <button class="btn btn-ghost" onclick="closeModal('createPO')">Cancel</button>
+      <button class="btn btn-primary" onclick="createPO()">Issue PO</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ══════════════ SCRIPT ══════════════ -->
+<script>
+  const API = "";  // same origin
+
+  // ── NAV ──────────────────────────────────────────────
+  function navigate(view) {
+    document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+    event.currentTarget.classList.add("active");
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById("view-" + view).classList.add("active");
+    loadView(view);
+  }
+
+  function loadView(view) {
+    if (view === "dashboard") { loadDashboard(); return; }
+    if (view === "inventory") { loadInventory(); return; }
+    if (view === "pr") { loadPRs(); return; }
+    if (view === "po") { loadPOs(); return; }
+  }
+
+  // ── MODAL ─────────────────────────────────────────────
+  function showModal(name) {
+    if (name === "createPR") populatePRSelect();
+    if (name === "createPO") populatePOPRSelect();
+    document.getElementById("modal-" + name).classList.add("open");
+  }
+
+  function closeModal(name) {
+    document.getElementById("modal-" + name).classList.remove("open");
+  }
+
+  document.querySelectorAll(".modal-overlay").forEach(overlay => {
+    overlay.addEventListener("click", e => {
+      if (e.target === overlay) overlay.classList.remove("open");
+    });
+  });
+
+  // ── TOAST ─────────────────────────────────────────────
+  function toast(msg, type = "info") {
+    const icons = { success: "✓", error: "✕", info: "ℹ" };
+    const t = document.createElement("div");
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+    document.getElementById("toastContainer").appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  // ── API HELPERS ───────────────────────────────────────
+  async function api(method, url, body) {
+    const opts = { method, headers: { "Content-Type": "application/json" } };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(API + url, opts);
+    return res.json();
+  }
+
+  // ── STATS ─────────────────────────────────────────────
+  async function refreshStats() {
+    const d = await api("GET", "/api/stats");
+    document.getElementById("hMat").textContent = d.totalMaterials + " Materials";
+    document.getElementById("hLow").textContent = d.lowStockCount + " Low Stock";
+    document.getElementById("hPR").textContent = d.pendingPRs + " Pending PRs";
+    document.getElementById("hPO").textContent = d.activeOrders + " Active POs";
+    document.getElementById("dsMat").textContent = d.totalMaterials;
+    document.getElementById("dsLow").textContent = d.lowStockCount;
+    document.getElementById("dsPR").textContent = d.pendingPRs;
+    document.getElementById("dsPO").textContent = d.activeOrders;
+  }
+
+  // ── DASHBOARD ─────────────────────────────────────────
+  async function loadDashboard() {
+    await refreshStats();
+    const res = await api("GET", "/materials");
+    const low = res.data.filter(m => m.quantity < m.threshold);
+    const tbody = document.getElementById("dashLowTable");
+    if (!low.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✓</div><div class="empty-text">All stock levels healthy</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = low.map(m => {
+      const pct = Math.min(100, Math.round((m.quantity / m.threshold) * 100));
+      const col = pct < 30 ? "var(--red)" : "var(--yellow)";
+      return `<tr>
+        <td>${m.id}</td>
+        <td>${m.name}</td>
+        <td style="color:var(--red);font-weight:600">${m.quantity}</td>
+        <td>${m.threshold}</td>
+        <td>
+          <div class="stock-bar-wrap">
+            <span style="font-size:10px;color:var(--red)">${pct}%</span>
+            <div class="stock-bar-bg"><div class="stock-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          </div>
+        </td>
+        <td><button class="btn btn-sm btn-primary" onclick="quickPR('${m.id}','${m.name}')">Create PR</button></td>
+      </tr>`;
+    }).join("");
+  }
+
+  function quickPR(id, name) {
+    showModal("createPR");
+    setTimeout(() => {
+      const sel = document.getElementById("pr-material");
+      sel.value = id;
+    }, 50);
+  }
+
+  // ── INVENTORY ─────────────────────────────────────────
+  async function loadInventory() {
+    const res = await api("GET", "/materials");
+    const materials = res.data;
+    document.getElementById("matCount").textContent = materials.length + " items";
+    const tbody = document.getElementById("inventoryTable");
+    if (!materials.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">No materials found</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = materials.map(m => {
+      const low = m.quantity < m.threshold;
+      const pct = Math.min(100, Math.round((m.quantity / m.threshold) * 100));
+      const col = low ? (pct < 30 ? "var(--red)" : "var(--yellow)") : "var(--green)";
+      return `<tr>
+        <td style="color:var(--accent2)">${m.id}</td>
+        <td>${m.name}</td>
+        <td style="font-weight:600;color:${low ? "var(--red)" : "var(--text)"}">${m.quantity}</td>
+        <td style="color:var(--muted)">${m.unit}</td>
+        <td>${m.threshold}</td>
+        <td>
+          <div class="stock-bar-wrap">
+            <span style="font-size:10px;color:${col}">${pct}%</span>
+            <div class="stock-bar-bg"><div class="stock-bar-fill" style="width:${pct}%;background:${col}"></div></div>
+          </div>
+        </td>
+        <td>${low ? `<span class="badge badge-low">⚠ LOW</span>` : `<span class="badge badge-ok">✓ OK</span>`}</td>
+        <td>${low ? `<button class="btn btn-sm btn-primary" onclick="quickPR('${m.id}','${m.name}')">+ PR</button>` : "—"}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  // ── PRs ───────────────────────────────────────────────
+  async function loadPRs() {
+    const res = await api("GET", "/prs");
+    const prs = res.data;
+    document.getElementById("prCount").textContent = prs.length + " items";
+    const tbody = document.getElementById("prTable");
+    if (!prs.length) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">No requisitions yet</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = prs.slice().reverse().map(pr => {
+      const statusBadge = {
+        Pending: `<span class="badge badge-pending">● Pending</span>`,
+        Converted: `<span class="badge badge-converted">✓ Converted</span>`,
+        Cancelled: `<span class="badge badge-cancelled">✕ Cancelled</span>`
+      }[pr.status] || pr.status;
+
+      const action = pr.status === "Pending"
+        ? `<div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-success" onclick="quickPO('${pr.id}')">→ PO</button>
+            <button class="btn btn-sm btn-danger" onclick="cancelPR('${pr.id}')">Cancel</button>
+           </div>`
+        : "—";
+
+      return `<tr>
+        <td style="color:var(--accent2)">${pr.id}</td>
+        <td>${pr.materialName}</td>
+        <td>${pr.quantity}</td>
+        <td style="color:var(--muted)">${pr.unit}</td>
+        <td style="color:var(--muted)">${pr.remarks || "—"}</td>
+        <td>${statusBadge}</td>
+        <td style="color:var(--muted)">${new Date(pr.createdAt).toLocaleDateString()}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function cancelPR(id) {
+    const res = await api("PUT", `/prs/${id}/cancel`);
+    if (res.success) { toast("PR cancelled.", "info"); loadPRs(); refreshStats(); }
+    else toast(res.message, "error");
+  }
+
+  function quickPO(prId) {
+    showModal("createPO");
+    setTimeout(() => {
+      const sel = document.getElementById("po-pr");
+      sel.value = prId;
+      onPRSelect();
+    }, 80);
+  }
+
+  // ── POs ───────────────────────────────────────────────
+  async function loadPOs() {
+    const res = await api("GET", "/orders");
+    const pos = res.data;
+    document.getElementById("poCount").textContent = pos.length + " items";
+    const tbody = document.getElementById("poTable");
+    if (!pos.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">🛒</div><div class="empty-text">No purchase orders yet</div></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = pos.slice().reverse().map(po => {
+      const statusBadge = {
+        Ordered: `<span class="badge badge-ordered">● Ordered</span>`,
+        "Goods Received": `<span class="badge badge-received">✓ GRN Done</span>`
+      }[po.status] || po.status;
+
+      const action = po.status === "Ordered"
+        ? `<button class="btn btn-sm btn-success" onclick="receiveGoods('${po.id}')">Receive GRN</button>`
+        : "—";
+
+      return `<tr>
+        <td style="color:var(--accent2)">${po.id}</td>
+        <td style="color:var(--muted)">${po.prId}</td>
+        <td>${po.materialName}</td>
+        <td>${po.quantity} ${po.unit}</td>
+        <td>${po.supplierName}</td>
+        <td>${po.unitPrice ? "₹" + po.unitPrice.toFixed(2) : "—"}</td>
+        <td style="font-weight:600">${po.totalValue ? "₹" + po.totalValue.toFixed(2) : "—"}</td>
+        <td>${statusBadge}</td>
+        <td>${action}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  async function receiveGoods(id) {
+    const res = await api("PUT", `/orders/${id}/receive`);
+    if (res.success) { toast("Goods received! Inventory updated. ✓", "success"); loadPOs(); refreshStats(); }
+    else toast(res.message, "error");
+  }
+
+  // ── FORM ACTIONS ──────────────────────────────────────
+
+  async function addMaterial() {
+    const name = document.getElementById("mat-name").value.trim();
+    const quantity = document.getElementById("mat-qty").value;
+    const threshold = document.getElementById("mat-threshold").value;
+    const unit = document.getElementById("mat-unit").value;
+    if (!name || !quantity || !threshold) return toast("Please fill all required fields.", "error");
+
+    const res = await api("POST", "/materials/add", { name, quantity, threshold, unit });
+    if (res.success) {
+      toast(`Material ${res.data.id} added successfully.`, "success");
+      closeModal("addMaterial");
+      ["mat-name","mat-qty","mat-threshold"].forEach(id => document.getElementById(id).value = "");
+      refreshStats();
+      if (document.getElementById("view-inventory").classList.contains("active")) loadInventory();
+    } else toast(res.message, "error");
+  }
+
+  async function populatePRSelect() {
+    const res = await api("GET", "/materials");
+    const sel = document.getElementById("pr-material");
+    sel.innerHTML = res.data.map(m =>
+      `<option value="${m.id}">[${m.id}] ${m.name} — Stock: ${m.quantity} ${m.unit}</option>`
+    ).join("");
+    if (!res.data.length) sel.innerHTML = `<option disabled>No materials available</option>`;
+  }
+
+  async function createPR() {
+    const materialId = document.getElementById("pr-material").value;
+    const quantity = document.getElementById("pr-qty").value;
+    const remarks = document.getElementById("pr-remarks").value;
+    if (!materialId || !quantity) return toast("Please select material and quantity.", "error");
+
+    const res = await api("POST", "/prs/create", { materialId, quantity, remarks });
+    if (res.success) {
+      toast(`${res.data.id} created successfully.`, "success");
+      closeModal("createPR");
+      document.getElementById("pr-qty").value = "";
+      document.getElementById("pr-remarks").value = "";
+      refreshStats();
+      if (document.getElementById("view-pr").classList.contains("active")) loadPRs();
+    } else toast(res.message, "error");
+  }
+
+  async function populatePOPRSelect() {
+    const res = await api("GET", "/prs");
+    const pending = res.data.filter(p => p.status === "Pending");
+    const sel = document.getElementById("po-pr");
+    sel.innerHTML = pending.length
+      ? pending.map(p => `<option value="${p.id}">[${p.id}] ${p.materialName} × ${p.quantity}</option>`).join("")
+      : `<option disabled>No pending PRs available</option>`;
+    onPRSelect();
+  }
+
+  function onPRSelect() {
+    const prId = document.getElementById("po-pr").value;
+    const qty = document.getElementById("po-qty-hidden")?.value || "";
+    const price = parseFloat(document.getElementById("po-price").value) || 0;
+    document.getElementById("po-preview").style.display = "none";
+  }
+
+  async function createPO() {
+    const prId = document.getElementById("po-pr").value;
+    const supplierName = document.getElementById("po-supplier").value.trim();
+    const unitPrice = document.getElementById("po-price").value;
+    const deliveryDate = document.getElementById("po-delivery").value;
+    if (!prId || !supplierName) return toast("Please select PR and enter supplier name.", "error");
+
+    const res = await api("POST", "/orders/create", { prId, supplierName, unitPrice, deliveryDate });
+    if (res.success) {
+      toast(`${res.data.id} issued to ${supplierName}.`, "success");
+      closeModal("createPO");
+      document.getElementById("po-supplier").value = "";
+      document.getElementById("po-price").value = "";
+      document.getElementById("po-delivery").value = "";
+      refreshStats();
+      if (document.getElementById("view-po").classList.contains("active")) loadPOs();
+      if (document.getElementById("view-pr").classList.contains("active")) loadPRs();
+    } else toast(res.message, "error");
+  }
+
+  function refreshAll() {
+    loadDashboard();
+    toast("Data refreshed.", "info");
+  }
+
+  // ── INIT ─────────────────────────────────────────────
+  loadDashboard();
+</script>
+</body>
+</html>
