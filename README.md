@@ -1,4 +1,4 @@
-# Mini SAP Procure-to-Pay (P2P) Web Application
+# SAP Procure-to-Pay (P2P) Web Application
 
 A minimal web-based application simulating the SAP Procure-to-Pay (P2P) cycle, built using Node.js/Express with SAP BTP concepts.
 
