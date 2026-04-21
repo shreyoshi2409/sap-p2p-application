@@ -39,6 +39,18 @@ Open browser at: **http://localhost:3000**
 
 ---
 
+## Features
+1. Material Master Management
+Create and manage materials with stock levels and reorder thresholds
+2. Purchase Requisition (PR)
+Automatically raise requisitions for low-stock items
+3. Purchase Order (PO)
+Convert PRs into supplier orders seamlessly
+4. Goods Receipt (GRN)
+Receive items and auto-update inventory in real time
+5. Dashboard Insights
+Track materials, requisitions, and orders
+
 ## 🔄 SAP P2P Flow
 
 ```
